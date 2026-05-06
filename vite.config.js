@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/mesto-ad/',
   server: {
-    open: true  // автоматически открывает браузер при запуске dev-сервера
+    open: true
   }
 });
