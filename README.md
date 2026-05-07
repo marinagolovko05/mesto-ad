@@ -1,3 +1,4 @@
+https://marinagolovko05.github.io/mesto-production/
 
 Для запуска приложения необходимо использовать live-server
 ![изображение live-server](image.png)
