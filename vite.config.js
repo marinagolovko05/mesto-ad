@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/mesto-production/',
+  base: './',
   server: {
     open: true
   }

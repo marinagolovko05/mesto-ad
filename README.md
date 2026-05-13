@@ -1,17 +1,15 @@
+// Проект Mesto
+// Ссылка на проект
+https://marinagolovko05.github.io/mesto-production/
 
-Для запуска приложения необходимо использовать live-server
-![изображение live-server](image.png)
-Live-server является расширением VSCode
-
-//Установка и запуск
-
-
+//Установка зависимостей
 npm install
+
+// Запуск проекта
 npm run dev
 
-
-// Сборка и публикация
-
-
+// Сборка проекта
 npm run build
+
+// Публикация на GitHub Pages
 npm run deploy

@@ -1,16 +1,11 @@
-const getTemplate = () => {
-  return document
-    .getElementById("card-template")
-    .content.querySelector(".card")
-    .cloneNode(true);
+const getCardTemplate = () => {
+  const template = document.querySelector("#card-template");
+  return template.content.querySelector(".card").cloneNode(true);
 };
 
-export const createCardElement = (
-  cardData,
-  currentUserId,
-  { onPreviewPicture, onLike, onDelete }
-) => {
-  const cardElement = getTemplate();
+export const createCardElement = (cardData, currentUserId, handlers) => {
+  const cardElement = getCardTemplate();
+
   const likeButton = cardElement.querySelector(".card__like-button");
   const deleteButton = cardElement.querySelector(".card__control-button_type_delete");
   const cardImage = cardElement.querySelector(".card__image");
@@ -28,24 +23,26 @@ export const createCardElement = (
   cardElement.dataset.cardId = cardData._id;
 
   const isLikedByMe = Boolean(cardData.likes?.some((user) => user._id === currentUserId));
+
   if (isLikedByMe) {
     likeButton.classList.add("card__like-button_is-active");
   }
+
   if (likeCountElement) {
     likeCountElement.textContent = String(cardData.likes?.length ?? 0);
   }
 
-  if (onLike) {
-    likeButton.addEventListener("click", () => onLike(likeButton, cardElement));
+  if (handlers?.onLike) {
+    likeButton.addEventListener("click", () => handlers.onLike(likeButton, cardElement));
   }
 
-  if (onDelete && isOwner) {
-    deleteButton.addEventListener("click", () => onDelete(cardElement));
+  if (handlers?.onDelete && isOwner) {
+    deleteButton.addEventListener("click", () => handlers.onDelete(cardElement));
   }
 
-  if (onPreviewPicture) {
+  if (handlers?.onPreviewPicture) {
     cardImage.addEventListener("click", () =>
-      onPreviewPicture({ name: cardData.name, link: cardData.link })
+      handlers.onPreviewPicture({ name: cardData.name, link: cardData.link })
     );
   }
 
@@ -57,7 +54,12 @@ export const updateCardLikesView = (cardElement, likes, currentUserId) => {
   const likeCountElement = cardElement.querySelector(".card__like-count");
 
   const isLikedByMe = Boolean(likes?.some((user) => user._id === currentUserId));
-  likeButton.classList.toggle("card__like-button_is-active", isLikedByMe);
+
+  if (isLikedByMe) {
+    likeButton.classList.add("card__like-button_is-active");
+  } else {
+    likeButton.classList.remove("card__like-button_is-active");
+  }
 
   if (likeCountElement) {
     likeCountElement.textContent = String(likes?.length ?? 0);

@@ -1,44 +1,49 @@
-const showInputError = (formElement, inputElement, errorMessage, validationConfig) => {
+const showInputError = (formElement, inputElement, errorMessage, config) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
+
   if (!errorElement) return;
 
-  inputElement.classList.add(validationConfig.inputErrorClass);
+  inputElement.classList.add(config.inputErrorClass);
   errorElement.textContent = errorMessage;
-  errorElement.classList.add(validationConfig.errorClass);
+  errorElement.classList.add(config.errorClass);
 };
 
-const hideInputError = (formElement, inputElement, validationConfig) => {
+const hideInputError = (formElement, inputElement, config) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
+
   if (!errorElement) return;
 
-  inputElement.classList.remove(validationConfig.inputErrorClass);
+  inputElement.classList.remove(config.inputErrorClass);
   errorElement.textContent = "";
-  errorElement.classList.remove(validationConfig.errorClass);
+  errorElement.classList.remove(config.errorClass);
 };
 
 const setCustomNameError = (inputElement) => {
-  const isNameField =
-    inputElement.classList.contains("popup__input_type_name") ||
-    inputElement.classList.contains("popup__input_type_card-name");
+  inputElement.setCustomValidity("");
 
-  if (!isNameField) return;
+  const hasPattern = inputElement.hasAttribute("pattern");
 
-  if (inputElement.value.trim().length === 0) {
+  if (!hasPattern) return;
+
+  if (inputElement.value.length > 0 && inputElement.value.trim().length === 0) {
     inputElement.setCustomValidity("Поле не может состоять только из пробелов.");
-  } else if (inputElement.validity.patternMismatch) {
-    inputElement.setCustomValidity("Разрешены только латинские и кириллические буквы, дефис и пробел.");
-  } else {
-    inputElement.setCustomValidity("");
+    return;
+  }
+
+  if (inputElement.validity.patternMismatch) {
+    inputElement.setCustomValidity(
+      "Разрешены только латинские и кириллические буквы, дефис и пробел."
+    );
   }
 };
 
-const checkInputValidity = (formElement, inputElement, validationConfig) => {
+const checkInputValidity = (formElement, inputElement, config) => {
   setCustomNameError(inputElement);
 
   if (!inputElement.validity.valid) {
-    showInputError(formElement, inputElement, inputElement.validationMessage, validationConfig);
+    showInputError(formElement, inputElement, inputElement.validationMessage, config);
   } else {
-    hideInputError(formElement, inputElement, validationConfig);
+    hideInputError(formElement, inputElement, config);
   }
 };
 
@@ -46,52 +51,58 @@ const hasInvalidInput = (inputList) => {
   return inputList.some((inputElement) => !inputElement.validity.valid);
 };
 
-const disableSubmitButton = (buttonElement, validationConfig) => {
-  buttonElement.classList.add(validationConfig.inactiveButtonClass);
+const disableSubmitButton = (buttonElement, config) => {
+  buttonElement.classList.add(config.inactiveButtonClass);
   buttonElement.disabled = true;
 };
 
-const enableSubmitButton = (buttonElement, validationConfig) => {
-  buttonElement.classList.remove(validationConfig.inactiveButtonClass);
+const enableSubmitButton = (buttonElement, config) => {
+  buttonElement.classList.remove(config.inactiveButtonClass);
   buttonElement.disabled = false;
 };
 
-const toggleButtonState = (inputList, buttonElement, validationConfig) => {
+const toggleButtonState = (inputList, buttonElement, config) => {
   if (hasInvalidInput(inputList)) {
-    disableSubmitButton(buttonElement, validationConfig);
+    disableSubmitButton(buttonElement, config);
   } else {
-    enableSubmitButton(buttonElement, validationConfig);
+    enableSubmitButton(buttonElement, config);
   }
 };
 
-const setEventListeners = (formElement, validationConfig) => {
-  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
-  const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
+const setEventListeners = (formElement, config) => {
+  const inputList = Array.from(formElement.querySelectorAll(config.inputSelector));
+  const buttonElement = formElement.querySelector(config.submitButtonSelector);
 
-  toggleButtonState(inputList, buttonElement, validationConfig);
+  toggleButtonState(inputList, buttonElement, config);
 
   inputList.forEach((inputElement) => {
     inputElement.addEventListener("input", () => {
-      checkInputValidity(formElement, inputElement, validationConfig);
-      toggleButtonState(inputList, buttonElement, validationConfig);
+      checkInputValidity(formElement, inputElement, config);
+      toggleButtonState(inputList, buttonElement, config);
     });
   });
 };
 
-export const clearValidation = (formElement, validationConfig) => {
-  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
-  const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
+export const clearValidation = (formElement, config) => {
+  const inputList = Array.from(formElement.querySelectorAll(config.inputSelector));
+  const buttonElement = formElement.querySelector(config.submitButtonSelector);
 
-  inputList.forEach((inputElement) => hideInputError(formElement, inputElement, validationConfig));
-  disableSubmitButton(buttonElement, validationConfig);
+  inputList.forEach((inputElement) => {
+    inputElement.setCustomValidity("");
+    hideInputError(formElement, inputElement, config);
+  });
+
+  disableSubmitButton(buttonElement, config);
 };
 
-export const enableValidation = (validationConfig) => {
-  const formList = Array.from(document.querySelectorAll(validationConfig.formSelector));
+export const enableValidation = (config) => {
+  const formList = Array.from(document.querySelectorAll(config.formSelector));
 
   formList.forEach((formElement) => {
-    formElement.addEventListener("submit", (evt) => evt.preventDefault());
-    setEventListeners(formElement, validationConfig);
+    formElement.addEventListener("submit", (evt) => {
+      evt.preventDefault();
+    });
+
+    setEventListeners(formElement, config);
   });
 };
-
