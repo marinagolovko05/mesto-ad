@@ -1,15 +1,15 @@
-// Проект Mesto
-// Ссылка на проект
+# Проект Mesto
+# Ссылка на проект
 https://marinagolovko05.github.io/mesto-production/
 
-//Установка зависимостей
+# Установка зависимостей
 npm install
 
-// Запуск проекта
+# Запуск проекта
 npm run dev
 
-// Сборка проекта
+# Сборка проекта
 npm run build
 
-// Публикация на GitHub Pages
+# Публикация на GitHub Pages
 npm run deploy
