@@ -70,7 +70,6 @@ const infoListContainer = infoPopup?.querySelector(".popup__list");
 
 let myUserId = null;
 let cardForDelete = null;
-let allCards = [];
 
 const validationOptions = {
   formSelector: ".popup__form",
@@ -81,21 +80,13 @@ const validationOptions = {
   errorClass: "popup__error_visible",
 };
 
-const changeButtonText = (btn, isLoading, defaultText, loadingText) => {
-  btn.textContent = isLoading ? loadingText : defaultText;
+const changeButtonText = (button, isLoading, defaultText, loadingText) => {
+  button.textContent = isLoading ? loadingText : defaultText;
 };
 
-const disableFormFields = (form, disabled) => {
-  const fields = form.querySelectorAll("input, textarea, button[type='submit']");
-  fields.forEach((field) => {
-    field.disabled = disabled;
-  });
-};
-
-const refreshValidation = (form) => {
-  form.querySelectorAll(".popup__input").forEach((input) => {
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+const setSubmitState = (button, isLoading, defaultText, loadingText) => {
+  button.disabled = isLoading;
+  changeButtonText(button, isLoading, defaultText, loadingText);
 };
 
 const openImagePreview = ({ name, link }) => {
@@ -108,8 +99,7 @@ const openImagePreview = ({ name, link }) => {
 const handleEditProfileSubmit = (evt) => {
   evt.preventDefault();
 
-  changeButtonText(editSubmitBtn, true, "Сохранить", "Сохранение...");
-  disableFormFields(editForm, true);
+  setSubmitState(editSubmitBtn, true, "Сохранить", "Сохранение...");
 
   updateUserProfile({
     name: editNameInput.value.trim(),
@@ -124,17 +114,14 @@ const handleEditProfileSubmit = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      disableFormFields(editForm, false);
-      refreshValidation(editForm);
-      changeButtonText(editSubmitBtn, false, "Сохранить", "Сохранение...");
+      setSubmitState(editSubmitBtn, false, "Сохранить", "Сохранение...");
     });
 };
 
 const handleAvatarSubmit = (evt) => {
   evt.preventDefault();
 
-  changeButtonText(avatarSubmitBtn, true, "Сохранить", "Сохранение...");
-  disableFormFields(avatarForm, true);
+  setSubmitState(avatarSubmitBtn, true, "Сохранить", "Сохранение...");
 
   changeUserAvatar(avatarUrl.value.trim())
     .then((user) => {
@@ -145,24 +132,20 @@ const handleAvatarSubmit = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      disableFormFields(avatarForm, false);
-      refreshValidation(avatarForm);
-      changeButtonText(avatarSubmitBtn, false, "Сохранить", "Сохранение...");
+      setSubmitState(avatarSubmitBtn, false, "Сохранить", "Сохранение...");
     });
 };
 
 const handleAddCardSubmit = (evt) => {
   evt.preventDefault();
 
-  changeButtonText(addCardBtn, true, "Создать", "Создание...");
-  disableFormFields(addCardForm, true);
+  setSubmitState(addCardBtn, true, "Создать", "Создание...");
 
   createNewCard({
     name: cardName.value.trim(),
     link: cardLink.value.trim(),
   })
     .then((newCard) => {
-      allCards = [newCard, ...allCards];
       placesList.prepend(
         createCardElement(newCard, myUserId, {
           onPreviewPicture: openImagePreview,
@@ -171,58 +154,47 @@ const handleAddCardSubmit = (evt) => {
         })
       );
       closeModalWindow(addCardPopup);
-      addCardForm.reset();
     })
     .catch((err) => {
       console.error(err);
     })
     .finally(() => {
-      disableFormFields(addCardForm, false);
-      refreshValidation(addCardForm);
-      changeButtonText(addCardBtn, false, "Создать", "Создание...");
+      setSubmitState(addCardBtn, false, "Создать", "Создание...");
     });
 };
 
-const handleLikeClick = (likeBtn, cardElement) => {
-  if (likeBtn.disabled) return;
+const handleLikeClick = (likeButton, cardId, isLiked) => {
+  if (likeButton.disabled) return;
 
-  const cardId = cardElement.dataset.cardId;
-  const isLiked = likeBtn.classList.contains("card__like-button_is-active");
-
-  likeBtn.disabled = true;
-  likeBtn.classList.add("card__like-button_pending");
+  likeButton.disabled = true;
 
   toggleLikeOnServer(cardId, isLiked)
-    .then((updated) => {
-      allCards = allCards.map((card) => (card._id === updated._id ? updated : card));
-      updateCardLikesView(cardElement, updated.likes, myUserId);
+    .then((updatedCard) => {
+      updateCardLikesView(likeButton.closest(".card"), updatedCard.likes, myUserId);
     })
     .catch((err) => {
       console.error(err);
     })
     .finally(() => {
-      likeBtn.classList.remove("card__like-button_pending");
-      likeBtn.disabled = false;
+      likeButton.disabled = false;
     });
 };
 
-const handleDeleteClick = (cardElement) => {
-  cardForDelete = cardElement;
+const handleDeleteClick = (cardElement, cardId) => {
+  cardForDelete = { cardElement, cardId };
   openModalWindow(deletePopup);
 };
 
 const handleDeleteConfirm = (evt) => {
   evt.preventDefault();
+
   if (!cardForDelete) return;
 
-  const cardId = cardForDelete.dataset.cardId;
-  changeButtonText(deleteConfirmBtn, true, "Да", "Удаление...");
-  deleteConfirmBtn.disabled = true;
+  setSubmitState(deleteConfirmBtn, true, "Да", "Удаление...");
 
-  removeCardFromServer(cardId)
+  removeCardFromServer(cardForDelete.cardId)
     .then(() => {
-      allCards = allCards.filter((card) => card._id !== cardId);
-      removeCardElement(cardForDelete);
+      removeCardElement(cardForDelete.cardElement);
       closeModalWindow(deletePopup);
       cardForDelete = null;
     })
@@ -230,13 +202,11 @@ const handleDeleteConfirm = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      changeButtonText(deleteConfirmBtn, false, "Да", "Удаление...");
-      deleteConfirmBtn.disabled = false;
+      setSubmitState(deleteConfirmBtn, false, "Да", "Удаление...");
     });
 };
 
 const renderAllCards = (cards) => {
-  allCards = [...cards];
   placesList.replaceChildren();
 
   cards.forEach((card) => {
@@ -334,13 +304,10 @@ const buildStats = (cards) => {
 const openStats = () => {
   if (!infoPopup) return;
 
-  buildStats(allCards);
-  openModalWindow(infoPopup);
-
   fetchInitialCards()
     .then((cards) => {
-      allCards = [...cards];
-      buildStats(allCards);
+      buildStats(cards);
+      openModalWindow(infoPopup);
     })
     .catch((err) => {
       console.error(err);

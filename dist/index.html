@@ -8,7 +8,7 @@
     />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Mesto</title>
-    <script type="module" crossorigin src="./assets/index-D6qSrPoa.js"></script>
+    <script type="module" crossorigin src="./assets/index-Cr665SF3.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-DKwl_nIp.css">
   </head>
   <body class="page">
@@ -22,9 +22,7 @@
       </header>
       <main class="content">
         <section class="profile page__section">
-          <div
-            class="profile__image"
-          ></div>
+          <div class="profile__image"></div>
           <div class="profile__info">
             <h1 class="profile__title"></h1>
             <button class="profile__edit-button" type="button"></button>
@@ -55,6 +53,7 @@
                 minlength="2"
                 maxlength="40"
                 pattern="^[A-Za-zА-Яа-яЁё\-\s]+$"
+                data-error-message="Разрешены только латинские и кириллические буквы, дефис и пробел."
                 required
               />
               <span class="popup__error" id="user-name-error"></span>
@@ -98,6 +97,7 @@
                 minlength="2"
                 maxlength="30"
                 pattern="^[A-Za-zА-Яа-яЁё\-\s]+$"
+                data-error-message="Разрешены только латинские и кириллические буквы, дефис и пробел."
                 required
               />
               <span class="popup__error" id="place-name-error"></span>
@@ -137,12 +137,7 @@
           <button type="button" class="popup__close"></button>
           <h3 class="popup__title">Вы уверены?</h3>
           <form class="popup__form" name="remove-card" novalidate>
-            <button
-              type="submit"
-              class="button popup__button"
-            >
-              Да
-            </button>
+            <button type="submit" class="button popup__button">Да</button>
           </form>
         </div>
       </div>
