@@ -12,6 +12,7 @@ import {
   createCardElement,
   removeCardElement,
   updateCardLikesView,
+  isCardLiked,
 } from "./components/card.js";
 
 import {
@@ -68,7 +69,7 @@ const infoPopupTitle = infoPopup?.querySelector(".popup__title");
 const infoPopupText = infoPopup?.querySelector(".popup__text");
 const infoListContainer = infoPopup?.querySelector(".popup__list");
 
-let myUserId = null;
+let currentUserId = null;
 let cardForDelete = null;
 
 const validationOptions = {
@@ -80,13 +81,15 @@ const validationOptions = {
   errorClass: "popup__error_visible",
 };
 
-const changeButtonText = (button, isLoading, defaultText, loadingText) => {
-  button.textContent = isLoading ? loadingText : defaultText;
+const changeButtonText = (btn, isLoading, defaultText, loadingText) => {
+  btn.textContent = isLoading ? loadingText : defaultText;
 };
 
-const setSubmitState = (button, isLoading, defaultText, loadingText) => {
-  button.disabled = isLoading;
-  changeButtonText(button, isLoading, defaultText, loadingText);
+const disableFormFields = (form, disabled) => {
+  const fields = form.querySelectorAll("input, textarea, button[type='submit']");
+  fields.forEach((field) => {
+    field.disabled = disabled;
+  });
 };
 
 const openImagePreview = ({ name, link }) => {
@@ -99,7 +102,8 @@ const openImagePreview = ({ name, link }) => {
 const handleEditProfileSubmit = (evt) => {
   evt.preventDefault();
 
-  setSubmitState(editSubmitBtn, true, "Сохранить", "Сохранение...");
+  changeButtonText(editSubmitBtn, true, "Сохранить", "Сохранение...");
+  disableFormFields(editForm, true);
 
   updateUserProfile({
     name: editNameInput.value.trim(),
@@ -114,14 +118,16 @@ const handleEditProfileSubmit = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      setSubmitState(editSubmitBtn, false, "Сохранить", "Сохранение...");
+      disableFormFields(editForm, false);
+      changeButtonText(editSubmitBtn, false, "Сохранить", "Сохранение...");
     });
 };
 
 const handleAvatarSubmit = (evt) => {
   evt.preventDefault();
 
-  setSubmitState(avatarSubmitBtn, true, "Сохранить", "Сохранение...");
+  changeButtonText(avatarSubmitBtn, true, "Сохранить", "Сохранение...");
+  disableFormFields(avatarForm, true);
 
   changeUserAvatar(avatarUrl.value.trim())
     .then((user) => {
@@ -132,14 +138,16 @@ const handleAvatarSubmit = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      setSubmitState(avatarSubmitBtn, false, "Сохранить", "Сохранение...");
+      disableFormFields(avatarForm, false);
+      changeButtonText(avatarSubmitBtn, false, "Сохранить", "Сохранение...");
     });
 };
 
 const handleAddCardSubmit = (evt) => {
   evt.preventDefault();
 
-  setSubmitState(addCardBtn, true, "Создать", "Создание...");
+  changeButtonText(addCardBtn, true, "Создать", "Создание...");
+  disableFormFields(addCardForm, true);
 
   createNewCard({
     name: cardName.value.trim(),
@@ -147,7 +155,7 @@ const handleAddCardSubmit = (evt) => {
   })
     .then((newCard) => {
       placesList.prepend(
-        createCardElement(newCard, myUserId, {
+        createCardElement(newCard, currentUserId, {
           onPreviewPicture: openImagePreview,
           onLike: handleLikeClick,
           onDelete: handleDeleteClick,
@@ -159,18 +167,23 @@ const handleAddCardSubmit = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      setSubmitState(addCardBtn, false, "Создать", "Создание...");
+      disableFormFields(addCardForm, false);
+      changeButtonText(addCardBtn, false, "Создать", "Создание...");
     });
 };
 
-const handleLikeClick = (likeButton, cardId, isLiked) => {
-  if (likeButton.disabled) return;
+const handleLikeClick = ({ cardId, cardElement, likeButton }) => {
+  if (likeButton.disabled) {
+    return;
+  }
+
+  const isLiked = isCardLiked(likeButton);
 
   likeButton.disabled = true;
 
   toggleLikeOnServer(cardId, isLiked)
     .then((updatedCard) => {
-      updateCardLikesView(likeButton.closest(".card"), updatedCard.likes, myUserId);
+      updateCardLikesView(cardElement, updatedCard.likes, currentUserId);
     })
     .catch((err) => {
       console.error(err);
@@ -180,21 +193,26 @@ const handleLikeClick = (likeButton, cardId, isLiked) => {
     });
 };
 
-const handleDeleteClick = (cardElement, cardId) => {
-  cardForDelete = { cardElement, cardId };
+const handleDeleteClick = ({ cardId, cardElement }) => {
+  cardForDelete = { cardId, cardElement };
   openModalWindow(deletePopup);
 };
 
 const handleDeleteConfirm = (evt) => {
   evt.preventDefault();
 
-  if (!cardForDelete) return;
+  if (!cardForDelete) {
+    return;
+  }
 
-  setSubmitState(deleteConfirmBtn, true, "Да", "Удаление...");
+  const { cardId, cardElement } = cardForDelete;
 
-  removeCardFromServer(cardForDelete.cardId)
+  changeButtonText(deleteConfirmBtn, true, "Да", "Удаление...");
+  deleteConfirmBtn.disabled = true;
+
+  removeCardFromServer(cardId)
     .then(() => {
-      removeCardElement(cardForDelete.cardElement);
+      removeCardElement(cardElement);
       closeModalWindow(deletePopup);
       cardForDelete = null;
     })
@@ -202,7 +220,8 @@ const handleDeleteConfirm = (evt) => {
       console.error(err);
     })
     .finally(() => {
-      setSubmitState(deleteConfirmBtn, false, "Да", "Удаление...");
+      changeButtonText(deleteConfirmBtn, false, "Да", "Удаление...");
+      deleteConfirmBtn.disabled = false;
     });
 };
 
@@ -211,7 +230,7 @@ const renderAllCards = (cards) => {
 
   cards.forEach((card) => {
     placesList.append(
-      createCardElement(card, myUserId, {
+      createCardElement(card, currentUserId, {
         onPreviewPicture: openImagePreview,
         onLike: handleLikeClick,
         onDelete: handleDeleteClick,
@@ -221,15 +240,20 @@ const renderAllCards = (cards) => {
 };
 
 const renderUserInfo = (user) => {
-  myUserId = user._id;
+  currentUserId = user._id;
   profileName.textContent = user.name;
   profileJob.textContent = user.about;
   profileAvatarImg.style.backgroundImage = `url(${user.avatar})`;
 };
 
 const buildStats = (cards) => {
-  if (!infoPopup || !infoDefContainer || !infoPopupTitle || !infoPopupText || !infoListContainer) return;
-  if (!infoDefTemplate || !infoListTemplate) return;
+  if (!infoPopup || !infoDefContainer || !infoPopupTitle || !infoPopupText || !infoListContainer) {
+    return;
+  }
+
+  if (!infoDefTemplate || !infoListTemplate) {
+    return;
+  }
 
   infoPopupTitle.textContent = "Статистика карточек";
 
@@ -302,7 +326,9 @@ const buildStats = (cards) => {
 };
 
 const openStats = () => {
-  if (!infoPopup) return;
+  if (!infoPopup) {
+    return;
+  }
 
   fetchInitialCards()
     .then((cards) => {
@@ -320,8 +346,8 @@ avatarForm.addEventListener("submit", handleAvatarSubmit);
 deleteForm.addEventListener("submit", handleDeleteConfirm);
 
 editProfileBtn.addEventListener("click", () => {
-  editNameInput.value = profileName.textContent;
-  editJobInput.value = profileJob.textContent;
+  editNameInput.value = profileName.textContent || "";
+  editJobInput.value = profileJob.textContent || "";
   clearValidation(editForm, validationOptions);
   openModalWindow(editPopup);
 });

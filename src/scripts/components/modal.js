@@ -14,9 +14,11 @@ export const openModalWindow = (modalWindow) => {
 
 export const closeModalWindow = (modalWindow) => {
   modalWindow.classList.remove("popup_is-opened");
+
   if (activePopup === modalWindow) {
     activePopup = null;
   }
+
   document.removeEventListener("keydown", onEscapeKey);
 };
 

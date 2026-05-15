@@ -10,6 +10,7 @@ const handleResponse = (response) => {
   if (!response.ok) {
     return Promise.reject(`Ошибка HTTP: ${response.status}`);
   }
+
   return response.json();
 };
 

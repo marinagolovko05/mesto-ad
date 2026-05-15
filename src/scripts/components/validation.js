@@ -1,7 +1,9 @@
 const showInputError = (formElement, inputElement, errorMessage, validationConfig) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
 
-  if (!errorElement) return;
+  if (!errorElement) {
+    return;
+  }
 
   inputElement.classList.add(validationConfig.inputErrorClass);
   errorElement.textContent = errorMessage;
@@ -11,7 +13,9 @@ const showInputError = (formElement, inputElement, errorMessage, validationConfi
 const hideInputError = (formElement, inputElement, validationConfig) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
 
-  if (!errorElement) return;
+  if (!errorElement) {
+    return;
+  }
 
   inputElement.classList.remove(validationConfig.inputErrorClass);
   errorElement.textContent = "";
@@ -21,8 +25,8 @@ const hideInputError = (formElement, inputElement, validationConfig) => {
 const setCustomValidityMessage = (inputElement) => {
   inputElement.setCustomValidity("");
 
-  if (inputElement.validity.patternMismatch) {
-    inputElement.setCustomValidity(inputElement.dataset.errorMessage || "");
+  if (inputElement.validity.patternMismatch && inputElement.dataset.errorMessage) {
+    inputElement.setCustomValidity(inputElement.dataset.errorMessage);
   }
 };
 
@@ -36,9 +40,7 @@ const checkInputValidity = (formElement, inputElement, validationConfig) => {
   }
 };
 
-const hasInvalidInput = (inputList) => {
-  return inputList.some((inputElement) => !inputElement.validity.valid);
-};
+const hasInvalidInput = (inputList) => inputList.some((inputElement) => !inputElement.validity.valid);
 
 const disableSubmitButton = (buttonElement, validationConfig) => {
   buttonElement.classList.add(validationConfig.inactiveButtonClass);
